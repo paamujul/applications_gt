@@ -55,8 +55,15 @@ def get_header(payload_headers, name: str) -> str:
     return ""
 
 def decode_part(data_b64: str) -> str:
-    # Gmail uses URL-safe base64
-    return base64.urlsafe_b64decode(data_b64.encode("utf-8")).decode("utf-8", errors="ignore")
+    """Decode a base64url string from Gmail."""
+    # Gmail uses URL-safe base64 and sometimes omits padding. Python's
+    # ``base64.urlsafe_b64decode`` expects properly padded input, so add the
+    # required ``=`` characters before decoding to avoid ``Incorrect padding``
+    # errors.
+    data_b64 += "=" * (-len(data_b64) % 4)
+    return base64.urlsafe_b64decode(data_b64.encode("utf-8")).decode(
+        "utf-8", errors="ignore"
+    )
 
 def strip_html(html: str) -> str:
     # quick-and-dirty HTML -> text
